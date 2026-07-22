@@ -4,6 +4,8 @@
  * Edit an existing product (main image + gallery images, with delete).
  */
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/video_utilities.php';
 require_login();
 
 $pdo = db();
@@ -155,6 +157,22 @@ include __DIR__ . '/../includes/header.php';
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Edit Product</h4>
     <a href="<?= e(BASE_URL) ?>/products/" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+</div>
+
+<!-- Quick Actions -->
+<div class="btn-group mb-3" role="group">
+    <a href="<?= e(BASE_URL) ?>/products/manage_videos.php?product_id=<?= $id ?>" class="btn btn-sm btn-outline-info" title="Manage product videos (YouTube, Facebook, TikTok)">
+        <i class="bi bi-play-circle me-1"></i> Videos
+    </a>
+    <a href="<?= e(BASE_URL) ?>/products/manage_variants.php?product_id=<?= $id ?>" class="btn btn-sm btn-outline-info" title="Manage product variants and attributes">
+        <i class="bi bi-diagram-2 me-1"></i> Variants
+    </a>
+    <a href="<?= e(BASE_URL) ?>/products/manage_inventory.php?product_id=<?= $id ?>" class="btn btn-sm btn-outline-info" title="Inventory tracking and history">
+        <i class="bi bi-archive me-1"></i> Inventory
+    </a>
+    <a href="<?= e(BASE_URL) ?>/products/manage_reviews.php?product_id=<?= $id ?>" class="btn btn-sm btn-outline-info" title="Manage customer reviews">
+        <i class="bi bi-star-fill me-1"></i> Reviews
+    </a>
 </div>
 
 <?php if ($errors): ?>

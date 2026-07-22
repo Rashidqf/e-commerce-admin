@@ -139,6 +139,228 @@ CREATE TABLE IF NOT EXISTS `order_items` (
       REFERENCES `products` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------
+-- Table: product_videos (Product video URLs)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product_videos` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` INT UNSIGNED NOT NULL,
+  `url`        VARCHAR(500) NOT NULL,
+  `platform`   ENUM('youtube','facebook','tiktok') NOT NULL,
+  `title`      VARCHAR(200) DEFAULT NULL,
+  `sort_order` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pvideo_product` (`product_id`),
+  CONSTRAINT `fk_pvideo_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: product_attributes (e.g., Size, Color, Material)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product_attributes` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` INT UNSIGNED NOT NULL,
+  `name`       VARCHAR(100) NOT NULL,
+  `values`     TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pattr_product` (`product_id`),
+  CONSTRAINT `fk_pattr_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: product_variants (Combinations of attributes)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product_variants` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` INT UNSIGNED NOT NULL,
+  `sku`        VARCHAR(100) NOT NULL,
+  `name`       VARCHAR(200) NOT NULL,
+  `attributes` JSON NOT NULL,
+  `price`      DECIMAL(12,2) NOT NULL,
+  `sale_price` DECIMAL(12,2) DEFAULT NULL,
+  `quantity`   INT NOT NULL DEFAULT 0,
+  `status`     ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_variant_sku` (`sku`),
+  KEY `idx_pvar_product` (`product_id`),
+  CONSTRAINT `fk_pvar_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: inventory_logs (Stock tracking and audit trail)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `inventory_logs` (
+  `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id`      INT UNSIGNED DEFAULT NULL,
+  `variant_id`      INT UNSIGNED DEFAULT NULL,
+  `quantity_change` INT NOT NULL,
+  `reason`          VARCHAR(100) NOT NULL,
+  `reference_id`    INT DEFAULT NULL,
+  `notes`           TEXT DEFAULT NULL,
+  `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_inv_product` (`product_id`),
+  KEY `idx_inv_variant` (`variant_id`),
+  KEY `idx_inv_created` (`created_at`),
+  CONSTRAINT `fk_inv_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_inv_variant` FOREIGN KEY (`variant_id`)
+      REFERENCES `product_variants` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: product_ratings (Customer reviews and ratings)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product_ratings` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` INT UNSIGNED NOT NULL,
+  `customer_id` INT UNSIGNED NOT NULL,
+  `order_id`   INT UNSIGNED DEFAULT NULL,
+  `rating`     TINYINT UNSIGNED NOT NULL,
+  `title`      VARCHAR(200) DEFAULT NULL,
+  `review`     TEXT DEFAULT NULL,
+  `helpful_count` INT DEFAULT 0,
+  `status`     ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_prating_product` (`product_id`),
+  KEY `idx_prating_customer` (`customer_id`),
+  KEY `idx_prating_order` (`order_id`),
+  KEY `idx_prating_status` (`status`),
+  CONSTRAINT `fk_prating_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_prating_customer` FOREIGN KEY (`customer_id`)
+      REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_prating_order` FOREIGN KEY (`order_id`)
+      REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: coupon_codes (Discount coupons)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `coupon_codes` (
+  `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code`            VARCHAR(50) NOT NULL,
+  `type`            ENUM('fixed','percentage') NOT NULL,
+  `value`           DECIMAL(12,2) NOT NULL,
+  `max_uses`        INT DEFAULT NULL,
+  `used_count`      INT DEFAULT 0,
+  `min_amount`      DECIMAL(12,2) DEFAULT NULL,
+  `start_date`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `expiry_date`     TIMESTAMP NULL,
+  `status`          ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_coupon_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: order_coupons (Applied coupons to orders)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `order_coupons` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id`   INT UNSIGNED NOT NULL,
+  `coupon_id`  INT UNSIGNED NOT NULL,
+  `code`       VARCHAR(50) NOT NULL,
+  `discount`   DECIMAL(12,2) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ocoupon_order` (`order_id`),
+  KEY `idx_ocoupon_coupon` (`coupon_id`),
+  CONSTRAINT `fk_ocoupon_order` FOREIGN KEY (`order_id`)
+      REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ocoupon_coupon` FOREIGN KEY (`coupon_id`)
+      REFERENCES `coupon_codes` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: product_discounts (Product-level discounts)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `product_discounts` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id`    INT UNSIGNED NOT NULL,
+  `type`          ENUM('fixed','percentage') NOT NULL,
+  `value`         DECIMAL(12,2) NOT NULL,
+  `min_quantity`  INT DEFAULT 1,
+  `max_quantity`  INT DEFAULT NULL,
+  `start_date`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `expiry_date`   TIMESTAMP NULL,
+  `status`        ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pdiscount_product` (`product_id`),
+  CONSTRAINT `fk_pdiscount_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: analytics_daily_sales (Daily sales analytics)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `analytics_daily_sales` (
+  `id`                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `date`              DATE NOT NULL,
+  `total_orders`      INT DEFAULT 0,
+  `total_revenue`     DECIMAL(12,2) DEFAULT 0,
+  `total_items_sold`  INT DEFAULT 0,
+  `avg_order_value`   DECIMAL(12,2) DEFAULT 0,
+  `created_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_analytics_date` (`date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: analytics_product_performance (Product sales metrics)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `analytics_product_performance` (
+  `id`               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id`       INT UNSIGNED NOT NULL,
+  `month`            VARCHAR(7) NOT NULL,
+  `total_sold`       INT DEFAULT 0,
+  `total_revenue`    DECIMAL(12,2) DEFAULT 0,
+  `avg_rating`       DECIMAL(3,2) DEFAULT NULL,
+  `view_count`       INT DEFAULT 0,
+  `created_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_product_month` (`product_id`, `month`),
+  KEY `idx_perf_product` (`product_id`),
+  CONSTRAINT `fk_perf_product` FOREIGN KEY (`product_id`)
+      REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------
+-- Table: analytics_customer_segments (Customer analytics)
+-- ---------------------------------------------------
+CREATE TABLE IF NOT EXISTS `analytics_customer_segments` (
+  `id`                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `customer_id`           INT UNSIGNED NOT NULL,
+  `total_orders`          INT DEFAULT 0,
+  `total_spent`           DECIMAL(12,2) DEFAULT 0,
+  `avg_order_value`       DECIMAL(12,2) DEFAULT 0,
+  `last_order_date`       TIMESTAMP NULL,
+  `customer_type`         ENUM('new','returning','loyal','inactive') NOT NULL DEFAULT 'new',
+  `lifetime_value`        DECIMAL(12,2) DEFAULT 0,
+  `created_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`            TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_segment_customer` (`customer_id`),
+  KEY `idx_seg_type` (`customer_type`),
+  CONSTRAINT `fk_seg_customer` FOREIGN KEY (`customer_id`)
+      REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================

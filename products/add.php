@@ -4,6 +4,7 @@
  * Add a new product with main image + multiple gallery images.
  */
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/helpers.php';
 require_login();
 
 $pdo = db();
@@ -199,6 +200,12 @@ include __DIR__ . '/../includes/header.php';
             </div>
         </div>
     </div>
+    
+    <div class="alert alert-info mt-3 mb-3">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Note:</strong> After creating the product, you can manage product videos, variants, and attributes from the product edit page.
+    </div>
+    
     <div class="mt-3">
         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Product</button>
         <a href="<?= e(BASE_URL) ?>/products/" class="btn btn-outline-secondary">Cancel</a>

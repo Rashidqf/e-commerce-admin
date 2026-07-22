@@ -11,6 +11,8 @@ $nav = [
     ['Categories', 'categories/',   'bi-tags'],
     ['Orders',     'orders/',       'bi-receipt'],
     ['Customers',  'customers/',    'bi-people'],
+    ['Coupons',    'coupons/',      'bi-percent'],
+    ['Analytics',  'analytics/',    'bi-graph-up'],
     ['Profile',    'profile/',       'bi-person-circle'],
 ];
 

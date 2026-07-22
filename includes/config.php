@@ -25,6 +25,7 @@ define('UPLOAD_DIR', __DIR__ . '/../uploads/');
 define('PRODUCT_UPLOAD_DIR', UPLOAD_DIR . 'products/');
 define('CATEGORY_UPLOAD_DIR', UPLOAD_DIR . 'categories/');
 define('PROFILE_UPLOAD_DIR', UPLOAD_DIR . 'admins/');
+define('CUSTOMER_UPLOAD_DIR', UPLOAD_DIR . 'customers/');
 
 // ---------------------------------------------------
 // Pagination
