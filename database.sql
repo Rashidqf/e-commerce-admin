@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `long_description` TEXT DEFAULT NULL,
   `main_image`       VARCHAR(255) DEFAULT NULL,
   `status`           ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `view_count`       INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
